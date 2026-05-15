@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 药品管理系统{% endblock %}
+
+{% block content %}
+<!-- 数据概览卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-capsule"></i> 药品总数</h5>
+                <h2 class="display-4">{{ total_drugs }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-check-circle"></i> 正常运行</h5>
+                <h2 class="display-4">{{ active_drugs }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle"></i> 预警数量</h5>
+                <h2 class="display-4">{{ alerts_summary.total }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-calendar-check"></i> 今日扣药</h5>
+                <h2 class="display-4">{{ today_logs|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 自动扣药状态 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-robot"></i> 自动扣药状态</h5>
+            </div>
+            <div class="card-body">
+                {% if auto_deduct_executed %}
+                <div class="alert alert-success mb-0">
+                    <i class="bi bi-check-circle-fill"></i> 
+                    <strong>今日已自动扣药</strong><br>
+                    <small>执行时间: 00:05 | 处理药品: {{ today_logs|length }}种 | 扣除总量: {{ today_total }}片</small>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-clock"></i> 
+                    <strong>今日尚未扣药</strong>，系统将在今晚00:05自动执行
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最新预警 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-bell-fill"></i> 最新预警</h5>
+            </div>
+            <div class="card-body">
+                {% if latest_alerts %}
+                <ul class="list-group list-group-flush">
+                    {% for alert in latest_alerts %}
+                    <li class="list-group-item">
+                        <span class="badge bg-{{ alert.alert_level }}">
+                            {% if alert.alert_level == 'danger' %}
+                            🔴
+                            {% elif alert.alert_level == 'warning' %}
+                            🟠
+                            {% else %}
+                            🟡
+                            {% endif %}
+                        </span>
+                        {{ alert.alert_message }}
+                        <small class="text-muted float-end">{{ alert.created_at.strftime('%H:%M') }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3 text-end">
+                    <a href="{{ url_for('alerts_list') }}" class="btn btn-sm btn-outline-danger">
+                        查看全部预警 <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0"><i class="bi bi-check-circle"></i> 暂无预警，一切正常！</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 今日服药计划 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> 今日服药计划</h5>
+            </div>
+            <div class="card-body">
+                {% for time, drugs in schedule.items() %}
+                    {% if drugs %}
+                    <div class="mb-2">
+                        <strong>{{ time }}:</strong> 
+                        <span class="text-primary">{{ drugs|join('、') }}</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if not schedule %}
+                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> 暂无服药计划</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 今日扣药详情 -->
+{% if today_logs %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> 今日扣药详情</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>药品名称</th>
+                                <th>计划用量</th>
+                                <th>实际扣除</th>
+                                <th>剩余数量</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in today_logs %}
+                            <tr>
+                                <td>{{ log.drug.name if log.drug else '-' }}</td>
+                                <td>{{ log.planned_dosage }}片</td>
+                                <td>{{ log.actual_dosage }}片</td>
+                                <td>{{ log.drug.remaining_quantity if log.drug else '-' }}片</td>
+                                <td>
+                                    {% if log.actual_dosage > 0 %}
+                                    <span class="badge bg-success">成功</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">失败</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 测试功能（仅开发环境） -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning">
+                <h6 class="mb-0"><i class="bi bi-tools"></i> 开发测试工具</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">以下功能仅用于开发测试，生产环境请移除：</p>
+                <form action="{{ url_for('manual_deduct') }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('确认手动触发扣药？')">
+                        <i class="bi bi-play-fill"></i> 手动触发扣药
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

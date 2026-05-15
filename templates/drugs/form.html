@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{% if drug %}编辑药品{% else %}新增药品{% endif %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-{% if drug %}pencil-square{% else %}plus-circle{% endif %}"></i>
+            {% if drug %}编辑药品：{{ drug.name }}{% else %}新增药品{% endif %}
+        </h2>
+    </div>
+    
+    <div class="col-12">
+        <form method="POST" onsubmit="return validateDrugForm()">
+            <div class="card mb-4">
+                <div class="card-header"><h5><i class="bi bi-info-circle"></i> 基本信息</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">药品编号 *</label>
+                            <input type="text" class="form-control" name="drug_id" value="{{ drug.drug_id if drug else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">药品名称 *</label>
+                            <input type="text" class="form-control" name="name" value="{{ drug.name if drug else '' }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">规格</label>
+                            <input type="text" class="form-control" name="specification" value="{{ drug.specification if drug else '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">分类</label>
+                            <input type="text" class="form-control" name="category" value="{{ drug.category if drug else '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">供应商</label>
+                            <input type="text" class="form-control" name="supplier" value="{{ drug.supplier if drug else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header"><h5><i class="bi bi-capsule"></i> 用药信息</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">每日用量（片）</label>
+                            <input type="number" step="0.25" class="form-control" name="daily_dosage" value="{{ drug.daily_dosage if drug else 1 }}" min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">服药时间</label><br>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="before_breakfast" id="before_breakfast" {% if drug and drug.before_breakfast %}checked{% endif %}>
+                                <label class="form-check-label" for="before_breakfast">早饭前</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="after_breakfast" id="after_breakfast" {% if drug and drug.after_breakfast %}checked{% endif %}>
+                                <label class="form-check-label" for="after_breakfast">早饭后</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="before_lunch" id="before_lunch" {% if drug and drug.before_lunch %}checked{% endif %}>
+                                <label class="form-check-label" for="before_lunch">午饭前</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="after_lunch" id="after_lunch" {% if drug and drug.after_lunch %}checked{% endif %}>
+                                <label class="form-check-label" for="after_lunch">午饭后</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="before_dinner" id="before_dinner" {% if drug and drug.before_dinner %}checked{% endif %}>
+                                <label class="form-check-label" for="before_dinner">晚饭前</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="after_dinner" id="after_dinner" {% if drug and drug.after_dinner %}checked{% endif %}>
+                                <label class="form-check-label" for="after_dinner">晚饭后</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header"><h5><i class="bi bi-calendar"></i> 有效期信息</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">生产日期</label>
+                            <input type="date" class="form-control" name="production_date" value="{{ drug.production_date.strftime('%Y-%m-%d') if drug and drug.production_date else '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">有效期（月）</label>
+                            <input type="number" class="form-control" name="validity_period" value="{{ drug.validity_period if drug else '' }}" min="1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">到期日期</label>
+                            <input type="date" class="form-control" name="expiry_date" value="{{ drug.expiry_date.strftime('%Y-%m-%d') if drug and drug.expiry_date else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header"><h5><i class="bi bi-box-seam"></i> 库存信息</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">入库数量（片）</label>
+                            <input type="number" class="form-control" name="stock_quantity" value="{{ drug.stock_quantity if drug else 0 }}" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> 保存</button>
+                <a href="{{ url_for('drugs_list') }}" class="btn btn-secondary btn-lg"><i class="bi bi-x-circle"></i> 取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

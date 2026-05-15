@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}扣药日志 - 药品管理系统{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-clock-history"></i> 扣药日志</h2>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>药品</th>
+                        <th>类型</th>
+                        <th>扣除量</th>
+                        <th>剩余量</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td><small>{{ log.change_date.strftime('%m-%d %H:%M') }}</small></td>
+                        <td>{{ log.drug.name if log.drug else '-' }}</td>
+                        <td>
+                            {% if log.change_type == 'auto_deduct' %}
+                            <span class="badge bg-info">自动扣药</span>
+                            {% else %}
+                            <span class="badge bg-success">手动入库</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.quantity }}片</td>
+                        <td>{{ log.new_quantity }}片</td>
+                        <td><small>{{ log.notes or '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

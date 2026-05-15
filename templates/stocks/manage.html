@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}库存管理 - 药品管理系统{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-box-seam"></i> 库存管理</h2>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> 快速入库</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('stock_add') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">选择药品</label>
+                        <select name="drug_id" class="form-select" required>
+                            <option value="">-- 请选择 --</option>
+                            {% for drug in drugs %}
+                            <option value="{{ drug.id }}">{{ drug.name }}（剩余{{ drug.remaining_quantity }}片）</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">入库数量（片）</label>
+                        <input type="number" name="quantity" class="form-control" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-circle"></i> 确认入库</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> 库存概览</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>药品名称</th><th>剩余量</th><th>可用天数</th><th>状态</th></tr></thead>
+                    <tbody>
+                        {% for drug in drugs %}
+                        <tr>
+                            <td>{{ drug.name }}</td>
+                            <td>{{ drug.remaining_quantity }}片</td>
+                            <td>{{ drug.get_days_remaining() }}天</td>
+                            <td>{% set status = drug.get_stock_status() %}<span class="badge bg-{{ status[0] }}">{{ status[1] }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <a href="{{ url_for('stocks_logs') }}" class="btn btn-outline-primary">
+            <i class="bi bi-clock-history"></i> 查看扣药日志
+        </a>
+    </div>
+</div>
+{% endblock %}

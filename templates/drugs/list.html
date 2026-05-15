@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}药品列表 - 药品管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-list-ul"></i> 药品列表</h2>
+    <a href="{{ url_for('drug_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增药品
+    </a>
+</div>
+
+<!-- 筛选栏 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">分类筛选</label>
+                <select id="category-filter" class="form-select" onchange="filterDrugs()">
+                    <option value="">全部分类</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">库存状态</label>
+                <select id="stock-status-filter" class="form-select" onchange="filterDrugs()">
+                    <option value="">全部状态</option>
+                    <option value="normal" {% if selected_stock_status == 'normal' %}selected{% endif %}>正常</option>
+                    <option value="low" {% if selected_stock_status == 'low' %}selected{% endif %}>库存不足</option>
+                    <option value="out" {% if selected_stock_status == 'out' %}selected{% endif %}>已用完</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 药品列表 -->
+{% if drugs %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>药品名称</th>
+                        <th>规格</th>
+                        <th>每日用量</th>
+                        <th>服药时间</th>
+                        <th>剩余量</th>
+                        <th>库存状态</th>
+                        <th>过期状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drug in drugs %}
+                    <tr>
+                        <td><code>{{ drug.drug_id }}</code></td>
+                        <td><strong>{{ drug.name }}</strong></td>
+                        <td>{{ drug.specification or '-' }}</td>
+                        <td>{{ drug.daily_dosage }}片</td>
+                        <td><small>{{ drug.get_medication_times_str() }}</small></td>
+                        <td>{{ drug.remaining_quantity }}片</td>
+                        <td>
+                            {% set stock_status = drug.get_stock_status() %}
+                            <span class="badge bg-{{ stock_status[0] }}">{{ stock_status[1] }}</span>
+                        </td>
+                        <td>
+                            {% set expiry_status = drug.get_expiry_status() %}
+                            <span class="badge bg-{{ expiry_status[0] }}">{{ expiry_status[1] }}</span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('drug_detail', drug_id=drug.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('drug_edit', drug_id=drug.id) }}" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form id="delete-form-{{ drug.id }}" action="{{ url_for('drug_delete', drug_id=drug.id) }}" method="POST" class="d-inline">
+                                <button type="button" onclick="confirmDelete({{ drug.id }}, '{{ drug.name }}')" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-capsule"></i>
+    <h5>暂无药品数据</h5>
+    <p>点击"新增药品"开始添加</p>
+</div>
+{% endif %}
+{% endblock %}

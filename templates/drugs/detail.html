@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ drug.name }} - 药品详情{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="bi bi-capsule"></i> {{ drug.name }}</h2>
+            <div>
+                <a href="{{ url_for('drug_edit', drug_id=drug.id) }}" class="btn btn-warning"><i class="bi bi-pencil"></i> 编辑</a>
+                <a href="{{ url_for('drugs_list') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card drug-detail-card">
+            <div class="card-header"><h5><i class="bi bi-info-circle"></i> 基本信息</h5></div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr><td width="40%">药品编号</td><td><code>{{ drug.drug_id }}</code></td></tr>
+                    <tr><td>药品名称</td><td><strong>{{ drug.name }}</strong></td></tr>
+                    <tr><td>规格</td><td>{{ drug.specification or '-' }}</td></tr>
+                    <tr><td>分类</td><td>{{ drug.category or '-' }}</td></tr>
+                    <tr><td>供应商</td><td>{{ drug.supplier or '-' }}</td></tr>
+                    <tr><td>单价</td><td>{{ '¥%.2f'|format(drug.unit_price) if drug.unit_price else '-' }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card drug-detail-card">
+            <div class="card-header"><h5><i class="bi bi-capsule"></i> 用药信息</h5></div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr><td width="40%">每日用量</td><td><strong>{{ drug.daily_dosage }}片</strong></td></tr>
+                    <tr><td>服药时间</td><td>{{ drug.get_medication_times_str() }}</td></tr>
+                    <tr><td>自动扣药</td><td><span class="badge bg-success">已启用</span></td></tr>
+                    <tr><td>用药说明</td><td>{{ drug.instructions or '-' }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card drug-detail-card">
+            <div class="card-header"><h5><i class="bi bi-calendar"></i> 有效期信息</h5></div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr><td width="40%">生产日期</td><td>{{ drug.production_date.strftime('%Y-%m-%d') if drug.production_date else '-' }}</td></tr>
+                    <tr><td>有效期</td><td>{{ drug.validity_period }}个月</td></tr>
+                    <tr><td>到期日期</td><td>{{ drug.expiry_date.strftime('%Y-%m-%d') if drug.expiry_date else '-' }}</td></tr>
+                    <tr><td>状态</td><td>{% set status = drug.get_expiry_status() %}<span class="badge bg-{{ status[0] }}">{{ status[1] }}</span></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card drug-detail-card">
+            <div class="card-header"><h5><i class="bi bi-box-seam"></i> 库存信息</h5></div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr><td width="40%">入库总量</td><td>{{ drug.stock_quantity }}片</td></tr>
+                    <tr><td>剩余数量</td><td><strong>{{ drug.remaining_quantity }}片</strong></td></tr>
+                    <tr><td>可用天数</td><td>{{ drug.get_days_remaining() }}天</td></tr>
+                    <tr><td>库存状态</td><td>{% set status = drug.get_stock_status() %}<span class="badge bg-{{ status[0] }}">{{ status[1] }}</span></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><h5><i class="bi bi-clock-history"></i> 最近扣药记录（7天）</h5></div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead><tr><th>日期</th><th>扣除量</th><th>剩余量</th><th>状态</th></tr></thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td>{{ log.medication_date.strftime('%m-%d') }}</td>
+                    <td>{{ log.actual_dosage }}片</td>
+                    <td>{{ drug.remaining_quantity }}片</td>
+                    <td>{% if log.actual_dosage > 0 %}<span class="badge bg-success">成功</span>{% else %}<span class="badge bg-danger">失败</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

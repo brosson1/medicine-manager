@@ -1,0 +1,35 @@
+services:
+  # Web服务 - Flask应用
+  - type: web
+    name: medicine-manager
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.8.0
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+    # 免费套餐配置
+    plan: free
+    
+  # Cron Job - 自动扣药任务（每天00:05执行）
+  - type: cron
+    name: auto-deduct-medication
+    env: python
+    schedule: "5 0 * * *"  # 每天00:05执行
+    buildCommand: pip install -r requirements.txt
+    startCommand: python cron_jobs.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.8.0
+    plan: free
+
+# 数据库（可选，如果使用PostgreSQL）
+# databases:
+#   - name: medicine-db
+#     databaseName: medicine_manager
+#     user: medicine_user
+#     plan: free
