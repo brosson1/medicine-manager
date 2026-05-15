@@ -7,6 +7,7 @@ from models import db, Drug, StockRecord, Alert, MedicationLog
 from services.auto_deduct import auto_deduct_daily_medication, get_medication_schedule
 from services.alert_checker import check_all_alerts, get_active_alerts, get_alerts_summary
 import os
+import sys
 
 # 创建Flask应用
 app = Flask(__name__)
@@ -16,9 +17,19 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 instance_dir = os.path.join(basedir, 'instance')
 if not os.path.exists(instance_dir):
     os.makedirs(instance_dir)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_dir, 'medicine.db')
+
+# 调试信息
+print(f"DEBUG: __file__ = {__file__}", file=sys.stderr)
+print(f"DEBUG: basedir = {basedir}", file=sys.stderr)
+print(f"DEBUG: instance_dir = {instance_dir}", file=sys.stderr)
+
+db_path = os.path.join(instance_dir, 'medicine.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'medicine-manager-secret-key-2026'
+
+print(f"DEBUG: Database URI = {app.config['SQLALCHEMY_DATABASE_URI']}", file=sys.stderr)
+print(f"DEBUG: Database file exists = {os.path.exists(db_path)}", file=sys.stderr)
 
 # 初始化数据库
 db.init_app(app)
@@ -26,6 +37,11 @@ db.init_app(app)
 # 自动创建所有表（如果不存在）
 with app.app_context():
     db.create_all()
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    tables = inspector.get_table_names()
+    print(f"DEBUG: Tables after create_all = {tables}", file=sys.stderr)
+    print(f"DEBUG: 'drugs' table exists = {'drugs' in tables}", file=sys.stderr)
 
 
 # ==================== 首页和数据看板 ====================
