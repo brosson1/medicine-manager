@@ -23,6 +23,10 @@ app.config['SECRET_KEY'] = 'medicine-manager-secret-key-2026'
 # 初始化数据库
 db.init_app(app)
 
+# 自动创建所有表（如果不存在）
+with app.app_context():
+    db.create_all()
+
 
 # ==================== 首页和数据看板 ====================
 
